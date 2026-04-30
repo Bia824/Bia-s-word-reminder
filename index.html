@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Work Reminder</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>Work Reminder</h1>
+  <div class="mode-switch">
+  <button id="allBtn" onclick="setMode('all')">全部任务</button>
+  <button id="focusBtn" onclick="setMode('focus')">专注模式</button>
+</div>
+<div class="stats">
+  <div>今日完成：<span id="todayDoneCount">0</span></div>
+  <div>未完成任务：<span id="pendingCount">0</span></div>
+  <div>优先任务：<span id="urgentCount">0</span></div>
+  <div>已过期：<span id="overdueCount">0</span></div>
+</div>
+
+  <div class="input-area">
+    <input id="taskInput" placeholder="输入任务...">
+    <input id="deadlineInput" type="date">
+    <button onclick="addTask()">添加</button>
+  </div>
+
+  <div class="boards">
+    <div class="board urgent">
+      <h2>优先要完成的任务</h2>
+      <ul id="urgentList"></ul>
+    </div>
+
+    <div class="board normal">
+      <h2>不紧急的任务</h2>
+      <ul id="normalList"></ul>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+
+</body>
+</html>
