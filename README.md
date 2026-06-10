@@ -4,6 +4,20 @@ A simple desktop-oriented work reminder tool designed to help manage task priori
 
 ---
 
+## Storage and Privacy
+
+This project is a private, single-user tool:
+
+* No account, sign-up, or login
+* No Supabase or other cloud backend
+* Tasks are stored only in the browser's `localStorage`
+* Opening the page is enough to start using it
+
+Local data belongs to the current browser profile and website origin. Clearing browser
+site data, switching browsers, or using another device will not carry tasks across.
+
+---
+
 ## 🎯 Purpose
 
 This tool is designed for people who:
@@ -100,6 +114,6 @@ Input Task + Deadline
 ## 🛠 Tech Stack (Planned)
 
 * Frontend: HTML / CSS / JavaScript
-* Backend: Supabase
+* Storage: Browser `localStorage`
 * Version Control: GitHub
 * Desktop App: Electron (later stage)
