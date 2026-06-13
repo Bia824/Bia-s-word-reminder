@@ -290,6 +290,10 @@ li {
   font-size: 12px;
 }
 
+.task-note {
+  white-space: pre-wrap;
+}
+
 .task-meta {
   margin-bottom: 4px;
   font-weight: 700;
@@ -301,11 +305,26 @@ li {
   margin-top: 10px;
 }
 
-.note-editor input,
+.note-editor textarea,
 .date-editor input {
   padding: 10px 12px;
   border-radius: 12px;
   font-size: 12px;
+}
+
+.note-editor textarea {
+  width: 100%;
+  min-height: 74px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  outline: none;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.69);
+  resize: vertical;
+}
+
+.note-editor textarea:focus {
+  border-color: rgba(75, 159, 213, 0.5);
+  box-shadow: 0 0 0 4px rgba(75, 159, 213, 0.13);
 }
 
 .editor-actions,

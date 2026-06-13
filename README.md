@@ -18,6 +18,35 @@ site data, switching browsers, or using another device will not carry tasks acro
 
 ---
 
+## Desktop App
+
+The Electron desktop version stores tasks locally and does not require a server.
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the desktop app during development:
+
+```bash
+npm start
+```
+
+Build the Windows installer:
+
+```bash
+npm run dist
+```
+
+The generated installer is saved as `dist/PriorityPlannerSetup.exe`.
+
+Browser tasks and desktop-app tasks use different local storage locations, so existing
+browser tasks are not automatically copied into the desktop app.
+
+---
+
 ## 🎯 Purpose
 
 This tool is designed for people who:

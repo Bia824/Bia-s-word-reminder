@@ -1,0 +1,41 @@
+{
+  "name": "priority-planner",
+  "version": "1.0.0",
+  "description": "A private local-first priority planner desktop app.",
+  "main": "main.js",
+  "author": "Bia824",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^39.8.10",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.bia824.priorityplanner",
+    "productName": "Priority Planner",
+    "artifactName": "PriorityPlannerSetup.${ext}",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "index.html",
+      "style.css",
+      "script.js",
+      "main.js",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Priority Planner"
+    }
+  }
+}

@@ -195,10 +195,10 @@ function renderTasks() {
       const editor = document.createElement("div");
       editor.className = "note-editor";
 
-      const noteInput = document.createElement("input");
-      noteInput.type = "text";
+      const noteInput = document.createElement("textarea");
+      noteInput.rows = 3;
       noteInput.value = task.note || "";
-      noteInput.placeholder = "输入备注或当前进度...";
+      noteInput.placeholder = "输入备注或当前进度...（Shift + Enter 换行）";
 
       const actions = document.createElement("div");
       actions.className = "editor-actions";
@@ -230,7 +230,8 @@ function renderTasks() {
       };
 
       noteInput.onkeydown = function (event) {
-        if (event.key === "Enter") {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
           saveNote();
         } else if (event.key === "Escape") {
           renderTasks();
