@@ -45,6 +45,10 @@ The generated installer is saved as `dist/PriorityPlannerSetup.exe`.
 Browser tasks and desktop-app tasks use different local storage locations, so existing
 browser tasks are not automatically copied into the desktop app.
 
+Starting with version `1.1.0`, the installed desktop app checks the public GitHub
+Releases page for updates. New releases must include the Windows installer,
+`latest.yml`, and the installer blockmap file.
+
 ---
 
 ## 🎯 Purpose
