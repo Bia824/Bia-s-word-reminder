@@ -178,6 +178,76 @@ function renderTasks() {
     const title = document.createElement("div");
     title.className = "task-title";
     title.textContent = task.text;
+    title.title = "双击编辑标题";
+
+    title.ondblclick = function (event) {
+      event.stopPropagation();
+
+      if (content.querySelector(".title-editor")) {
+        return;
+      }
+
+      const editor = document.createElement("div");
+      editor.className = "title-editor";
+
+      const titleInput = document.createElement("input");
+      titleInput.type = "text";
+      titleInput.value = task.text;
+      titleInput.placeholder = "输入任务标题...";
+
+      const actions = document.createElement("div");
+      actions.className = "editor-actions";
+
+      const saveButton = document.createElement("button");
+      saveButton.textContent = "保存";
+
+      const cancelButton = document.createElement("button");
+      cancelButton.textContent = "取消";
+
+      const saveTitle = function () {
+        const newTitle = titleInput.value.trim();
+
+        if (!newTitle) {
+          titleInput.focus();
+          return;
+        }
+
+        task.text = newTitle;
+        saveTasks();
+        renderTasks();
+      };
+
+      saveButton.onclick = function (buttonEvent) {
+        buttonEvent.stopPropagation();
+        saveTitle();
+      };
+
+      cancelButton.onclick = function (buttonEvent) {
+        buttonEvent.stopPropagation();
+        renderTasks();
+      };
+
+      titleInput.onclick = function (inputEvent) {
+        inputEvent.stopPropagation();
+      };
+
+      titleInput.onkeydown = function (keyEvent) {
+        if (keyEvent.key === "Enter") {
+          keyEvent.preventDefault();
+          saveTitle();
+        } else if (keyEvent.key === "Escape") {
+          renderTasks();
+        }
+      };
+
+      actions.appendChild(saveButton);
+      actions.appendChild(cancelButton);
+      editor.appendChild(titleInput);
+      editor.appendChild(actions);
+      title.replaceWith(editor);
+      titleInput.focus();
+      titleInput.select();
+    };
 
     const meta = document.createElement("div");
     meta.className = "task-meta";
@@ -187,7 +257,9 @@ function renderTasks() {
     note.className = "task-note";
     note.textContent = task.note ? "备注：" + task.note : "点击任务添加备注";
 
-    content.onclick = function () {
+    note.onclick = function (event) {
+      event.stopPropagation();
+
       if (content.querySelector(".note-editor")) {
         return;
       }

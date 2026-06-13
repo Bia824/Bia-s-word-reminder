@@ -282,6 +282,7 @@ li {
   font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: text;
 }
 
 .task-meta,
@@ -299,17 +300,28 @@ li {
   font-weight: 700;
 }
 
+.title-editor,
 .note-editor {
   display: grid;
   gap: 8px;
   margin-top: 10px;
 }
 
+.title-editor {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.title-editor input,
 .note-editor textarea,
 .date-editor input {
   padding: 10px 12px;
   border-radius: 12px;
   font-size: 12px;
+}
+
+.title-editor input {
+  font-weight: 800;
 }
 
 .note-editor textarea {
