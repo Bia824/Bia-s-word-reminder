@@ -14,31 +14,38 @@
         <h1>Work Reminder</h1>
         <p class="subtitle">把注意力留给真正重要的事情。</p>
       </div>
-
-      <div class="mode-switch" aria-label="任务显示模式">
-        <button id="allBtn" onclick="setMode('all')">全部任务</button>
-        <button id="focusBtn" onclick="setMode('focus')">专注模式</button>
-      </div>
     </header>
 
-    <section class="stats" aria-label="任务统计">
-      <div class="stat-card">
-        <span>今日完成</span>
-        <strong id="todayDoneCount">0</strong>
-      </div>
-      <div class="stat-card">
-        <span>未完成任务</span>
+    <section class="view-filters" aria-label="任务视图筛选">
+      <button class="filter-card active" data-filter="all" onclick="setFilter('all')">
+        <span>全部</span>
+        <strong id="allCount">0</strong>
+      </button>
+      <button class="filter-card" data-filter="pending" onclick="setFilter('pending')">
+        <span>未完成</span>
         <strong id="pendingCount">0</strong>
-      </div>
-      <div class="stat-card">
-        <span>优先任务</span>
+      </button>
+      <button class="filter-card" data-filter="priority" onclick="setFilter('priority')">
+        <span>优先</span>
         <strong id="urgentCount">0</strong>
-      </div>
-      <div class="stat-card">
+      </button>
+      <button class="filter-card" data-filter="overdue" onclick="setFilter('overdue')">
         <span>已过期</span>
         <strong id="overdueCount">0</strong>
-      </div>
+      </button>
+      <button class="filter-card" data-filter="todayDone" onclick="setFilter('todayDone')">
+        <span>今日完成</span>
+        <strong id="todayDoneCount">0</strong>
+      </button>
+      <button class="filter-card focus-card" data-filter="focus" onclick="setFilter('focus')">
+        <span>专注模式</span>
+        <strong id="focusCount">0</strong>
+      </button>
     </section>
+
+    <div class="active-filter">
+      当前视图：<strong id="activeFilterLabel">全部任务</strong>
+    </div>
 
     <section class="input-area" aria-label="新增任务">
       <div class="input-copy">
@@ -47,31 +54,25 @@
       </div>
       <input id="taskInput" placeholder="输入任务内容...">
       <input id="noteInput" placeholder="添加备注（可选）...">
-      <input id="deadlineInput" type="date" aria-label="截止日期">
+      <div id="deadlinePicker" class="deadline-picker">
+        <input id="deadlineInput" type="hidden">
+        <button id="deadlinePickerToggle" class="deadline-picker-toggle" type="button" onclick="toggleDeadlinePicker()">年/月/日 --:--</button>
+        <div id="deadlinePickerPanel" class="deadline-picker-panel" hidden></div>
+      </div>
       <button class="add-button" onclick="addTask()">添加任务</button>
     </section>
 
-    <section class="boards">
-      <div class="board urgent">
+    <section id="boards" class="boards">
+      <div class="board task-board">
         <div class="board-heading">
           <div>
-            <span class="board-label">Priority</span>
-            <h2>优先要完成的任务</h2>
+            <span class="board-label">Timeline</span>
+            <h2>任务列表</h2>
           </div>
           <span class="status-dot"></span>
         </div>
-        <ul id="urgentList"></ul>
-      </div>
-
-      <div class="board normal">
-        <div class="board-heading">
-          <div>
-            <span class="board-label">Later</span>
-            <h2>不紧急的任务</h2>
-          </div>
-          <span class="status-dot"></span>
-        </div>
-        <ul id="normalList"></ul>
+        <p class="board-description">越靠上越紧急，已完成任务自动下放。</p>
+        <ul id="taskList"></ul>
       </div>
     </section>
   </main>

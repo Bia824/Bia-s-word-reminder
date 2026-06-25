@@ -55,7 +55,8 @@ body::after {
 }
 
 button,
-input {
+input,
+textarea {
   font: inherit;
 }
 
@@ -71,10 +72,8 @@ button {
 
 .hero {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
   gap: 24px;
-  margin-bottom: 26px;
+  margin-bottom: 22px;
   padding: 8px 4px;
 }
 
@@ -101,39 +100,14 @@ h1 {
   font-size: 15px;
 }
 
-.mode-switch {
-  display: flex;
-  gap: 7px;
-  padding: 6px;
-  border: 1px solid var(--glass-border);
-  border-radius: 18px;
-  background: var(--glass);
-  box-shadow: 0 10px 24px rgba(78, 82, 145, 0.1);
-  backdrop-filter: blur(18px);
-}
-
-.mode-switch button {
-  padding: 11px 18px;
-  border-radius: 13px;
-  color: var(--muted);
-  background: transparent;
-  font-weight: 700;
-}
-
-.mode-switch button.active {
-  color: var(--purple-dark);
-  background: var(--glass-strong);
-  box-shadow: 0 7px 18px rgba(78, 82, 145, 0.13);
-}
-
-.stats {
+.view-filters {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin-bottom: 18px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
-.stat-card,
+.filter-card,
 .input-area,
 .board {
   border: 1px solid var(--glass-border);
@@ -143,52 +117,77 @@ h1 {
   -webkit-backdrop-filter: blur(22px);
 }
 
-.stat-card {
+.filter-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 92px;
-  padding: 20px;
-  border-radius: 24px;
+  min-height: 66px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  color: var(--ink);
+  text-align: left;
 }
 
-.stat-card span {
+.filter-card span {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
 }
 
-.stat-card strong {
-  font-size: 31px;
+.filter-card strong {
+  font-size: 24px;
   letter-spacing: -0.04em;
 }
 
+.filter-card.active {
+  border-color: rgba(75, 159, 213, 0.45);
+  color: var(--purple-dark);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 12px 28px rgba(54, 143, 199, 0.18);
+}
+
+.focus-card {
+  color: var(--purple-dark);
+}
+
+.active-filter {
+  margin: 0 4px 16px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.active-filter strong {
+  color: var(--purple-dark);
+}
+
 .input-area {
+  position: relative;
+  z-index: 30;
   display: grid;
-  grid-template-columns: minmax(170px, 0.7fr) minmax(210px, 1.25fr) minmax(180px, 1fr) auto auto;
+  grid-template-columns: minmax(145px, 0.65fr) minmax(170px, 1fr) minmax(155px, 0.9fr) minmax(250px, 1fr) auto;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   margin-bottom: 20px;
-  padding: 17px;
-  border-radius: 28px;
+  padding: 14px;
+  border-radius: 24px;
 }
 
 .input-copy {
   display: flex;
   flex-direction: column;
-  padding: 0 8px;
+  padding: 0 6px;
 }
 
 .input-copy strong {
-  font-size: 14px;
+  font-size: 13px;
 }
 
 input {
   width: 100%;
   min-width: 0;
-  padding: 15px 17px;
+  padding: 12px 14px;
   border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 17px;
+  border-radius: 15px;
   outline: none;
   color: var(--ink);
   background: rgba(255, 255, 255, 0.69);
@@ -204,9 +203,148 @@ input:focus {
   box-shadow: 0 0 0 4px rgba(75, 159, 213, 0.13);
 }
 
+.deadline-picker {
+  position: relative;
+  min-width: 0;
+}
+
+.deadline-picker-toggle {
+  width: 100%;
+  min-height: 43px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 15px;
+  color: #2679af;
+  background: rgba(255, 255, 255, 0.69);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  text-align: left;
+  font-weight: 700;
+}
+
+.deadline-picker-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 100;
+  width: min(344px, calc(100vw - 48px));
+  padding: 12px;
+  border: 2px solid rgba(75, 159, 213, 0.42);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 18px 40px rgba(32, 48, 68, 0.18);
+}
+
+.deadline-panel-header,
+.deadline-panel-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.deadline-panel-header {
+  margin-bottom: 10px;
+}
+
+.deadline-panel-header button {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 10px;
+  color: var(--purple-dark);
+  background: #eef8ff;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.deadline-panel-body {
+  display: grid;
+  grid-template-columns: 1fr 86px;
+  gap: 12px;
+}
+
+.deadline-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.deadline-weekday,
+.deadline-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 27px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.deadline-weekday {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.deadline-day {
+  color: var(--ink);
+  background: transparent;
+  font-weight: 800;
+}
+
+.deadline-day:not(.empty):hover {
+  background: #eef8ff;
+}
+
+.deadline-day.selected {
+  color: white;
+  background: #1688e5;
+}
+
+.deadline-time {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.deadline-time label {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.deadline-time select {
+  width: 100%;
+  padding: 8px 7px;
+  border: 1px solid rgba(75, 159, 213, 0.2);
+  border-radius: 10px;
+  color: var(--ink);
+  background: #f6fbff;
+  font: inherit;
+}
+
+.deadline-panel-footer {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(75, 159, 213, 0.14);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.deadline-confirm-button {
+  padding: 9px 16px;
+  border-radius: 12px;
+  color: white;
+  background: #1688e5;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 .add-button {
-  padding: 15px 20px;
-  border-radius: 17px;
+  padding: 12px 17px;
+  border-radius: 15px;
   color: white;
   background: linear-gradient(135deg, #65b8eb, #368fc7);
   box-shadow: 0 10px 20px rgba(54, 143, 199, 0.24);
@@ -216,12 +354,12 @@ input:focus {
 
 .boards {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
 }
 
 .board {
-  min-height: 400px;
+  min-height: 0;
   padding: 22px;
   border-radius: 30px;
 }
@@ -247,17 +385,20 @@ input:focus {
   box-shadow: 0 0 0 7px rgba(115, 188, 232, 0.16);
 }
 
-.board.normal .status-dot {
-  background: var(--blue);
-  box-shadow: 0 0 0 7px rgba(116, 189, 240, 0.15);
-}
-
 ul {
   margin: 0;
   padding: 0;
 }
 
+.board-description {
+  margin: -6px 2px 12px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 li {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 11px;
@@ -277,6 +418,9 @@ li {
 }
 
 .task-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   overflow: hidden;
   margin-bottom: 6px;
   font-weight: 800;
@@ -297,6 +441,28 @@ li {
 
 .task-meta {
   margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.overdue-badge {
+  display: inline-flex;
+  flex: 0 0 auto;
+  padding: 2px 6px;
+  border: 1px solid rgba(211, 103, 122, 0.34);
+  border-radius: 999px;
+  color: #b74f63;
+  background: #fff0f2;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.overdue-hint {
+  display: inline-block;
+  margin-top: -1px;
+  margin-bottom: 4px;
+  color: #b74f63;
+  font-size: 11px;
   font-weight: 700;
 }
 
@@ -357,7 +523,13 @@ li {
 }
 
 .overdue {
-  box-shadow: inset 4px 0 #e487a9, 0 10px 24px rgba(78, 82, 145, 0.09);
+  border-color: rgba(211, 103, 122, 0.28);
+  background: linear-gradient(90deg, rgba(255, 240, 242, 0.92), rgba(255, 255, 255, 0.64));
+  box-shadow: inset 4px 0 #e26f8a, 0 10px 22px rgba(183, 79, 99, 0.1);
+}
+
+.overdue .task-meta {
+  color: #b74f63;
 }
 
 .today {
@@ -435,14 +607,14 @@ li.done > button:first-child {
 
 button,
 li,
-.stat-card,
+.filter-card,
 .board,
 .input-area {
   transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 }
 
 button:hover,
-.stat-card:hover,
+.filter-card:hover,
 li:hover {
   transform: translateY(-2px);
 }
@@ -452,8 +624,8 @@ button:active {
 }
 
 @media (max-width: 900px) {
-  .stats {
-    grid-template-columns: repeat(2, 1fr);
+  .view-filters {
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .input-area {
@@ -475,13 +647,13 @@ button:active {
     flex-direction: column;
   }
 
-  .mode-switch button {
-    flex: 1;
-  }
-
   .boards,
   .input-area {
     grid-template-columns: 1fr;
+  }
+
+  .view-filters {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .input-copy {
