@@ -1,6 +1,6 @@
 {
   "name": "priority-planner",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "description": "A private local-first priority planner desktop app.",
   "main": "main.js",
   "author": "Bia824",
@@ -27,6 +27,7 @@
       "index.html",
       "style.css",
       "script.js",
+      "preload.js",
       "main.js",
       "package.json"
     ],

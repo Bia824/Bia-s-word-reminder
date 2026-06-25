@@ -7,6 +7,16 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div id="updateProgress" class="update-progress" hidden>
+    <div class="update-progress-copy">
+      <strong id="updateProgressTitle">更新下载中</strong>
+      <span id="updateProgressDetail">0%</span>
+    </div>
+    <div class="update-progress-track" aria-hidden="true">
+      <div id="updateProgressBar" class="update-progress-bar"></div>
+    </div>
+  </div>
+
   <main class="app-shell">
     <header class="hero">
       <div>

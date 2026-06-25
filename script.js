@@ -733,6 +733,60 @@ document.addEventListener("click", function (event) {
   }
 });
 
+function formatBytes(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) {
+    return "";
+  }
+
+  if (bytes >= 1024 * 1024) {
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  }
+
+  return Math.round(bytes / 1024) + " KB";
+}
+
+function updateDownloadProgress(payload) {
+  const progress = document.getElementById("updateProgress");
+  const title = document.getElementById("updateProgressTitle");
+  const detail = document.getElementById("updateProgressDetail");
+  const bar = document.getElementById("updateProgressBar");
+
+  if (!progress || !title || !detail || !bar || !payload) {
+    return;
+  }
+
+  if (payload.status === "error") {
+    progress.hidden = false;
+    title.textContent = payload.message || "更新失败";
+    detail.textContent = "";
+    bar.style.width = "100%";
+    progress.classList.add("error");
+    return;
+  }
+
+  progress.classList.remove("error");
+  progress.hidden = false;
+
+  const percent = Math.max(0, Math.min(100, Math.round(payload.percent || 0)));
+  bar.style.width = percent + "%";
+
+  if (payload.status === "downloaded") {
+    title.textContent = payload.message || "更新已下载";
+    detail.textContent = "100%";
+    return;
+  }
+
+  title.textContent = "更新下载中";
+
+  const transferred = formatBytes(payload.transferred);
+  const total = formatBytes(payload.total);
+  detail.textContent = transferred && total ? `${percent}% · ${transferred}/${total}` : `${percent}%`;
+}
+
+if (window.priorityPlannerUpdates) {
+  window.priorityPlannerUpdates.onProgress(updateDownloadProgress);
+}
+
 renderTasks();
 updateFilterUI();
 updateDeadlineConfirmState();

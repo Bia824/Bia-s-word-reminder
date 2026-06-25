@@ -1,3 +1,4 @@
+const path = require("path");
 const { app, BrowserWindow, dialog } = require("electron");
 const { autoUpdater } = require("electron-updater");
 
@@ -12,6 +13,7 @@ function createWindow() {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
+      preload: path.join(__dirname, "preload.js"),
       sandbox: true
     }
   });
@@ -24,6 +26,12 @@ function configureAutoUpdates(mainWindow) {
   if (!app.isPackaged) {
     return;
   }
+
+  const sendUpdateProgress = function (payload) {
+    if (!mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("update-progress", payload);
+    }
+  };
 
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
@@ -40,11 +48,43 @@ function configureAutoUpdates(mainWindow) {
     });
 
     if (result.response === 0) {
-      autoUpdater.downloadUpdate();
+      sendUpdateProgress({
+        percent: 0,
+        status: "downloading"
+      });
+      mainWindow.setProgressBar(0);
+      autoUpdater.downloadUpdate().catch((error) => {
+        mainWindow.setProgressBar(-1);
+        sendUpdateProgress({
+          message: "更新下载失败",
+          status: "error"
+        });
+        console.error("Update download failed:", error);
+      });
     }
   });
 
+  autoUpdater.on("download-progress", (progress) => {
+    const percent = Math.max(0, Math.min(100, progress.percent || 0));
+
+    mainWindow.setProgressBar(percent / 100);
+    sendUpdateProgress({
+      bytesPerSecond: progress.bytesPerSecond,
+      percent,
+      status: "downloading",
+      total: progress.total,
+      transferred: progress.transferred
+    });
+  });
+
   autoUpdater.on("update-downloaded", async (info) => {
+    mainWindow.setProgressBar(-1);
+    sendUpdateProgress({
+      message: "更新已下载，等待安装",
+      percent: 100,
+      status: "downloaded"
+    });
+
     const result = await dialog.showMessageBox(mainWindow, {
       type: "info",
       buttons: ["重启并安装", "稍后安装"],
@@ -61,6 +101,11 @@ function configureAutoUpdates(mainWindow) {
   });
 
   autoUpdater.on("error", (error) => {
+    mainWindow.setProgressBar(-1);
+    sendUpdateProgress({
+      message: "更新检查失败",
+      status: "error"
+    });
     console.error("自动更新检查失败：", error);
   });
 
