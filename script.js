@@ -19,9 +19,8 @@ let draftDeadlineDate = new Date();
 const filterLabels = {
   all: "全部任务",
   pending: "未完成任务",
-  priority: "优先任务",
   overdue: "已过期任务",
-  todayDone: "今日完成",
+  abandoned: "已放弃任务",
   focus: "专注模式"
 };
 
@@ -156,23 +155,23 @@ function formatDeadline(deadline) {
   return `${month}-${day} ${hour}:${minute}`;
 }
 
-function isCompletedToday(task) {
-  if (!task.done || !task.completedAt) {
-    return false;
-  }
+function isAbandoned(task) {
+  return Boolean(task.abandonedAt);
+}
 
-  const today = getTodayStart();
-  const completedDate = new Date(task.completedAt);
-  completedDate.setHours(0, 0, 0, 0);
-
-  return completedDate.getTime() === today.getTime();
+function isActiveTask(task) {
+  return !task.done && !isAbandoned(task);
 }
 
 function isPriorityTask(task, info) {
-  return !task.done && info.diffMs <= PRIORITY_WINDOW_MS;
+  return isActiveTask(task) && info.diffMs <= PRIORITY_WINDOW_MS;
 }
 
 function getTaskSortBucket(task, info) {
+  if (isAbandoned(task)) {
+    return 3;
+  }
+
   if (task.done) {
     return 2;
   }
@@ -202,6 +201,10 @@ function compareTasks(a, b) {
     return new Date(b.completedAt || 0) - new Date(a.completedAt || 0);
   }
 
+  if (aBucket === 3) {
+    return new Date(b.abandonedAt || 0) - new Date(a.abandonedAt || 0);
+  }
+
   return aInfo.deadlineDate - bInfo.deadlineDate;
 }
 
@@ -209,10 +212,15 @@ function updateStats() {
   let pendingCount = 0;
   let urgentCount = 0;
   let overdueCount = 0;
-  let todayDoneCount = 0;
+  let abandonedCount = 0;
 
   tasks.forEach((task) => {
     const info = getDeadlineInfo(task.deadline);
+
+    if (isAbandoned(task)) {
+      abandonedCount++;
+      return;
+    }
 
     if (!task.done) {
       pendingCount++;
@@ -225,36 +233,31 @@ function updateStats() {
         overdueCount++;
       }
     }
-
-    if (isCompletedToday(task)) {
-      todayDoneCount++;
-    }
   });
 
   document.getElementById("allCount").textContent = tasks.length;
   document.getElementById("pendingCount").textContent = pendingCount;
-  document.getElementById("urgentCount").textContent = urgentCount;
   document.getElementById("overdueCount").textContent = overdueCount;
-  document.getElementById("todayDoneCount").textContent = todayDoneCount;
+  document.getElementById("abandonedCount").textContent = abandonedCount;
   document.getElementById("focusCount").textContent = urgentCount;
   updateFilterUI();
 }
 
 function shouldShowTask(task, info) {
   if (filterMode === "pending") {
-    return !task.done;
+    return isActiveTask(task);
   }
 
-  if (filterMode === "priority" || filterMode === "focus") {
+  if (filterMode === "focus") {
     return isPriorityTask(task, info);
   }
 
   if (filterMode === "overdue") {
-    return !task.done && info.diffMs < 0;
+    return isActiveTask(task) && info.diffMs < 0;
   }
 
-  if (filterMode === "todayDone") {
-    return isCompletedToday(task);
+  if (filterMode === "abandoned") {
+    return isAbandoned(task);
   }
 
   return true;
@@ -387,46 +390,87 @@ function createNoteEditor(task, note, content) {
 }
 
 function createDateEditor(task, li, editButton) {
+  let taskDraftDeadlineDate = parseDeadline(task.deadline);
+
+  if (Number.isNaN(taskDraftDeadlineDate.getTime())) {
+    taskDraftDeadlineDate = getInitialDraftDeadline();
+  }
+
   const editor = document.createElement("div");
   editor.className = "date-editor";
 
-  const dateInput = document.createElement("input");
-  dateInput.type = "datetime-local";
-  dateInput.value = toDateTimeLocalValue(task.deadline);
+  const panel = document.createElement("div");
+  panel.className = "deadline-picker-panel task-deadline-panel";
 
-  const confirmButton = document.createElement("button");
-  confirmButton.textContent = "确认";
+  function renderTaskDeadlinePicker() {
+    renderDeadlinePickerPanel(panel, taskDraftDeadlineDate, {
+      onShiftMonth: "shiftTaskDraftMonth",
+      onSelectDay: "selectTaskDraftDay",
+      onUpdateTime: "updateTaskDraftTime",
+      onCancel: "cancelTaskDeadlineSelection",
+      onConfirm: "confirmTaskDeadlineSelection"
+    });
+  }
 
-  const cancelButton = document.createElement("button");
-  cancelButton.textContent = "取消";
+  window.shiftTaskDraftMonth = function (direction) {
+    taskDraftDeadlineDate = new Date(
+      taskDraftDeadlineDate.getFullYear(),
+      taskDraftDeadlineDate.getMonth() + direction,
+      1,
+      taskDraftDeadlineDate.getHours(),
+      taskDraftDeadlineDate.getMinutes()
+    );
+    renderTaskDeadlinePicker();
+  };
 
-  confirmButton.onclick = function () {
-    if (!dateInput.value) {
+  window.selectTaskDraftDay = function (day) {
+    taskDraftDeadlineDate = new Date(
+      taskDraftDeadlineDate.getFullYear(),
+      taskDraftDeadlineDate.getMonth(),
+      day,
+      taskDraftDeadlineDate.getHours(),
+      taskDraftDeadlineDate.getMinutes()
+    );
+    renderTaskDeadlinePicker();
+  };
+
+  window.updateTaskDraftTime = function (unit, value) {
+    const nextValue = Number(value);
+
+    if (unit === "hour") {
+      taskDraftDeadlineDate.setHours(nextValue);
+    } else {
+      taskDraftDeadlineDate.setMinutes(nextValue);
+    }
+
+    renderTaskDeadlinePicker();
+  };
+
+  window.confirmTaskDeadlineSelection = function () {
+    if (Number.isNaN(taskDraftDeadlineDate.getTime())) {
+      alert("请先选择截止时间");
       return;
     }
 
-    task.deadline = dateInput.value;
+    task.deadline = toDateTimeLocalValue(taskDraftDeadlineDate.toISOString());
     saveTasks();
     renderTasks();
   };
 
-  cancelButton.onclick = function () {
+  window.cancelTaskDeadlineSelection = function () {
     renderTasks();
   };
 
-  dateInput.onkeydown = function (event) {
-    if (event.key === "Enter") {
-      confirmButton.click();
-    } else if (event.key === "Escape") {
+  editor.onkeydown = function (event) {
+    if (event.key === "Escape") {
       renderTasks();
     }
   };
 
-  editor.appendChild(dateInput);
-  editor.appendChild(confirmButton);
-  editor.appendChild(cancelButton);
+  renderTaskDeadlinePicker();
+  editor.appendChild(panel);
   li.replaceChild(editor, editButton);
-  dateInput.focus();
+  panel.focus();
 }
 
 function renderTasks() {
@@ -450,15 +494,28 @@ function renderTasks() {
       li.classList.add("done");
     }
 
+    if (isAbandoned(task)) {
+      li.classList.add("abandoned");
+    }
+
     const doneButton = document.createElement("button");
-    doneButton.textContent = task.done ? "✓" : "";
-    doneButton.setAttribute("aria-label", task.done ? "标记为未完成" : "标记为已完成");
+    doneButton.textContent = task.done ? "✓" : isAbandoned(task) ? "×" : "";
+    doneButton.disabled = isAbandoned(task);
+    doneButton.setAttribute(
+      "aria-label",
+      isAbandoned(task) ? "已放弃任务" : task.done ? "标记为未完成" : "标记为已完成"
+    );
 
     doneButton.onclick = function () {
+      if (isAbandoned(task)) {
+        return;
+      }
+
       task.done = !task.done;
 
       if (task.done) {
         task.completedAt = new Date().toISOString();
+        task.abandonedAt = null;
       } else {
         task.completedAt = null;
       }
@@ -469,18 +526,34 @@ function renderTasks() {
 
     const content = document.createElement("div");
     content.className = "task-content";
-    const isOverdueTask = !task.done && info.diffMs < 0;
+    const isAbandonedTask = isAbandoned(task);
+    const isPendingTask = isActiveTask(task) && info.diffMs >= 0;
+    const isOverdueTask = isActiveTask(task) && info.diffMs < 0;
 
     const title = document.createElement("div");
     title.className = "task-title";
     title.textContent = task.text;
     title.title = "双击编辑标题";
 
+    if (isPendingTask) {
+      const pendingBadge = document.createElement("span");
+      pendingBadge.className = "pending-badge";
+      pendingBadge.textContent = "进行中";
+      title.appendChild(pendingBadge);
+    }
+
     if (isOverdueTask) {
       const overdueBadge = document.createElement("span");
       overdueBadge.className = "overdue-badge";
-      overdueBadge.textContent = "OVERDUE";
+      overdueBadge.textContent = "已过期";
       title.appendChild(overdueBadge);
+    }
+
+    if (isAbandonedTask) {
+      const abandonedBadge = document.createElement("span");
+      abandonedBadge.className = "abandoned-badge";
+      abandonedBadge.textContent = "已放弃";
+      title.appendChild(abandonedBadge);
     }
 
     title.ondblclick = function (event) {
@@ -490,7 +563,7 @@ function renderTasks() {
 
     const meta = document.createElement("div");
     meta.className = "task-meta";
-    meta.textContent = formatDeadline(task.deadline) + " ｜ " + info.statusText;
+    meta.textContent = formatDeadline(task.deadline) + " ｜ " + (isAbandonedTask ? "已放弃" : info.statusText);
 
     const overdueHint = document.createElement("span");
     overdueHint.className = "overdue-hint";
@@ -520,6 +593,23 @@ function renderTasks() {
       createDateEditor(task, li, editButton);
     };
 
+    const abandonButton = document.createElement("button");
+    abandonButton.textContent = isAbandonedTask ? "恢复" : "放弃";
+    abandonButton.className = "task-action abandon-action";
+
+    abandonButton.onclick = function () {
+      if (isAbandoned(task)) {
+        task.abandonedAt = null;
+      } else {
+        task.done = false;
+        task.completedAt = null;
+        task.abandonedAt = new Date().toISOString();
+      }
+
+      saveTasks();
+      renderTasks();
+    };
+
     const deleteButton = document.createElement("button");
     deleteButton.textContent = "删除";
     deleteButton.className = "task-action delete-action";
@@ -532,7 +622,12 @@ function renderTasks() {
 
     li.appendChild(doneButton);
     li.appendChild(content);
-    li.appendChild(editButton);
+    if (!isAbandonedTask) {
+      li.appendChild(editButton);
+    }
+    if (!task.done) {
+      li.appendChild(abandonButton);
+    }
     li.appendChild(deleteButton);
 
     document.getElementById("taskList").appendChild(li);
@@ -621,12 +716,21 @@ function updateDraftTime(unit, value) {
 
 function renderDeadlinePicker() {
   const panel = document.getElementById("deadlinePickerPanel");
-  const year = draftDeadlineDate.getFullYear();
-  const month = draftDeadlineDate.getMonth();
+  renderDeadlinePickerPanel(panel, draftDeadlineDate, {
+    onShiftMonth: "shiftDraftMonth",
+    onSelectDay: "selectDraftDay",
+    onUpdateTime: "updateDraftTime",
+    onConfirm: "confirmDeadlineSelection"
+  });
+}
+
+function renderDeadlinePickerPanel(panel, selectedDate, handlers) {
+  const year = selectedDate.getFullYear();
+  const month = selectedDate.getMonth();
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const hour = draftDeadlineDate.getHours();
-  const minute = draftDeadlineDate.getMinutes();
+  const hour = selectedDate.getHours();
+  const minute = selectedDate.getMinutes();
   const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
   let calendarHtml = "";
 
@@ -639,36 +743,43 @@ function renderDeadlinePicker() {
   }
 
   for (let day = 1; day <= daysInMonth; day++) {
-    const selected = day === draftDeadlineDate.getDate() ? " selected" : "";
-    calendarHtml += `<button class="deadline-day${selected}" type="button" onclick="selectDraftDay(${day})">${day}</button>`;
+    const selected = day === selectedDate.getDate() ? " selected" : "";
+    calendarHtml += `<button class="deadline-day${selected}" type="button" onclick="${handlers.onSelectDay}(${day})">${day}</button>`;
   }
+
+  const cancelButtonHtml = handlers.onCancel
+    ? `<button class="deadline-cancel-button" type="button" onclick="${handlers.onCancel}()">取消</button>`
+    : "";
 
   panel.innerHTML = `
     <div class="deadline-panel-header">
-      <button type="button" aria-label="上个月" onclick="shiftDraftMonth(-1)">‹</button>
+      <button type="button" aria-label="上个月" onclick="${handlers.onShiftMonth}(-1)">‹</button>
       <strong>${year}年${String(month + 1).padStart(2, "0")}月</strong>
-      <button type="button" aria-label="下个月" onclick="shiftDraftMonth(1)">›</button>
+      <button type="button" aria-label="下个月" onclick="${handlers.onShiftMonth}(1)">›</button>
     </div>
     <div class="deadline-panel-body">
       <div class="deadline-calendar">${calendarHtml}</div>
       <div class="deadline-time">
         <label>
           <span>小时</span>
-          <select onchange="updateDraftTime('hour', this.value)">
+          <select onchange="${handlers.onUpdateTime}('hour', this.value)">
             ${Array.from({ length: 24 }, (_, index) => `<option value="${index}"${index === hour ? " selected" : ""}>${String(index).padStart(2, "0")}</option>`).join("")}
           </select>
         </label>
         <label>
           <span>分钟</span>
-          <select onchange="updateDraftTime('minute', this.value)">
+          <select onchange="${handlers.onUpdateTime}('minute', this.value)">
             ${Array.from({ length: 60 }, (_, index) => `<option value="${index}"${index === minute ? " selected" : ""}>${String(index).padStart(2, "0")}</option>`).join("")}
           </select>
         </label>
       </div>
     </div>
     <div class="deadline-panel-footer">
-      <span>${formatPickerLabel(toDateTimeLocalValue(draftDeadlineDate.toISOString()))}</span>
-      <button class="deadline-confirm-button" type="button" onclick="confirmDeadlineSelection()">确认</button>
+      <span>${formatPickerLabel(toDateTimeLocalValue(selectedDate.toISOString()))}</span>
+      <div class="deadline-panel-actions">
+        <button class="deadline-confirm-button" type="button" onclick="${handlers.onConfirm}()">确认</button>
+        ${cancelButtonHtml}
+      </div>
     </div>
   `;
 }
@@ -712,6 +823,7 @@ function addTask() {
     deadline: deadline,
     note: note,
     done: false,
+    abandonedAt: null,
     createdAt: new Date().toISOString()
   });
 

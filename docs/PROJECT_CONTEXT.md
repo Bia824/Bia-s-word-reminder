@@ -55,21 +55,29 @@ Generated or downloaded files that must not be committed:
 
 ## Current Features
 
-- Create tasks with title, optional note, and deadline
+- Create tasks with title, optional note, and deadline date/time
 - Double-click a task title to edit it inline
 - Complete and reopen tasks
+- Abandon and restore tasks without deleting their history
 - Delete tasks
-- Change task deadlines with confirm and cancel controls
+- Change task deadlines with the shared custom date/time picker
 - Edit task notes inside task cards
 - Use `Shift + Enter` to insert a note line break
 - Use `Enter` to save a note
 - Use `Escape` to cancel note editing
 - Preserve note line breaks when displayed
 - Automatically classify overdue, today, tomorrow, and later tasks
-- Show priority and non-urgent task boards
-- Show completed today, pending, priority, and overdue statistics
-- Switch between all tasks and focus mode
-- Responsive blue and white glassmorphism interface
+- Highlight unfinished overdue tasks with a soft overdue badge, warning hint,
+  and warm status styling
+- Visually distinguish active, overdue, completed, and abandoned task cards
+- Show a single task list sorted by deadline urgency
+- The task list extends naturally with the page; there is no internal list scrollbar
+- Sort unfinished non-overdue tasks by earliest deadline first, then overdue tasks,
+  then completed and abandoned tasks last
+- Use clickable view filters for all tasks, pending, overdue, abandoned, and
+  focus mode
+- Hide the non-urgent task board in focus mode
+- Responsive soft blue and white rounded-card interface
 - Install as a Windows desktop application
 - Check GitHub Releases for updates after startup
 
