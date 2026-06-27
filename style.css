@@ -489,6 +489,7 @@ li {
   position: relative;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
   margin-top: 12px;
   padding: 16px;
@@ -619,8 +620,11 @@ li {
 .date-editor {
   display: grid;
   gap: 8px;
-  min-width: 0;
-  flex: 1;
+  justify-content: center;
+  width: 100%;
+  min-width: 100%;
+  flex: 0 0 100%;
+  padding-left: 35px;
 }
 
 .task-deadline-panel {

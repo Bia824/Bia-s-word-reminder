@@ -390,6 +390,13 @@ function createNoteEditor(task, note, content) {
 }
 
 function createDateEditor(task, li, editButton) {
+  const currentEditor = li.querySelector(".date-editor");
+
+  if (currentEditor) {
+    currentEditor.remove();
+    return;
+  }
+
   let taskDraftDeadlineDate = parseDeadline(task.deadline);
 
   if (Number.isNaN(taskDraftDeadlineDate.getTime())) {
@@ -469,7 +476,7 @@ function createDateEditor(task, li, editButton) {
 
   renderTaskDeadlinePicker();
   editor.appendChild(panel);
-  li.replaceChild(editor, editButton);
+  li.appendChild(editor);
   panel.focus();
 }
 
