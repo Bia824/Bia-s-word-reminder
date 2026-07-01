@@ -409,17 +409,7 @@ function createDateEditor(task, li, editButton) {
   const panel = document.createElement("div");
   panel.className = "deadline-picker-panel task-deadline-panel";
 
-  function renderTaskDeadlinePicker() {
-    renderDeadlinePickerPanel(panel, taskDraftDeadlineDate, {
-      onShiftMonth: "shiftTaskDraftMonth",
-      onSelectDay: "selectTaskDraftDay",
-      onUpdateTime: "updateTaskDraftTime",
-      onCancel: "cancelTaskDeadlineSelection",
-      onConfirm: "confirmTaskDeadlineSelection"
-    });
-  }
-
-  window.shiftTaskDraftMonth = function (direction) {
+  function shiftTaskDraftMonth(direction) {
     taskDraftDeadlineDate = new Date(
       taskDraftDeadlineDate.getFullYear(),
       taskDraftDeadlineDate.getMonth() + direction,
@@ -428,9 +418,9 @@ function createDateEditor(task, li, editButton) {
       taskDraftDeadlineDate.getMinutes()
     );
     renderTaskDeadlinePicker();
-  };
+  }
 
-  window.selectTaskDraftDay = function (day) {
+  function selectTaskDraftDay(day) {
     taskDraftDeadlineDate = new Date(
       taskDraftDeadlineDate.getFullYear(),
       taskDraftDeadlineDate.getMonth(),
@@ -439,9 +429,9 @@ function createDateEditor(task, li, editButton) {
       taskDraftDeadlineDate.getMinutes()
     );
     renderTaskDeadlinePicker();
-  };
+  }
 
-  window.updateTaskDraftTime = function (unit, value) {
+  function updateTaskDraftTime(unit, value) {
     const nextValue = Number(value);
 
     if (unit === "hour") {
@@ -451,9 +441,9 @@ function createDateEditor(task, li, editButton) {
     }
 
     renderTaskDeadlinePicker();
-  };
+  }
 
-  window.confirmTaskDeadlineSelection = function () {
+  function confirmTaskDeadlineSelection() {
     if (Number.isNaN(taskDraftDeadlineDate.getTime())) {
       alert("请先选择截止时间");
       return;
@@ -462,11 +452,21 @@ function createDateEditor(task, li, editButton) {
     task.deadline = toDateTimeLocalValue(taskDraftDeadlineDate.toISOString());
     saveTasks();
     renderTasks();
-  };
+  }
 
-  window.cancelTaskDeadlineSelection = function () {
+  function cancelTaskDeadlineSelection() {
     renderTasks();
-  };
+  }
+
+  function renderTaskDeadlinePicker() {
+    renderDeadlinePickerPanel(panel, taskDraftDeadlineDate, {
+      onShiftMonth: shiftTaskDraftMonth,
+      onSelectDay: selectTaskDraftDay,
+      onUpdateTime: updateTaskDraftTime,
+      onCancel: cancelTaskDeadlineSelection,
+      onConfirm: confirmTaskDeadlineSelection
+    });
+  }
 
   editor.onkeydown = function (event) {
     if (event.key === "Escape") {
@@ -706,6 +706,7 @@ function selectDraftDay(day) {
     draftDeadlineDate.getHours(),
     draftDeadlineDate.getMinutes()
   );
+  commitDraftDeadline();
   renderDeadlinePicker();
 }
 
@@ -718,16 +719,29 @@ function updateDraftTime(unit, value) {
     draftDeadlineDate.setMinutes(nextValue);
   }
 
+  commitDraftDeadline();
   renderDeadlinePicker();
+}
+
+function commitDraftDeadline() {
+  const deadlineInput = document.getElementById("deadlineInput");
+
+  if (!deadlineInput || Number.isNaN(draftDeadlineDate.getTime())) {
+    return;
+  }
+
+  deadlineInput.value = toDateTimeLocalValue(draftDeadlineDate.toISOString());
+  confirmedDeadlineValue = deadlineInput.value;
+  updateDeadlineConfirmState();
 }
 
 function renderDeadlinePicker() {
   const panel = document.getElementById("deadlinePickerPanel");
   renderDeadlinePickerPanel(panel, draftDeadlineDate, {
-    onShiftMonth: "shiftDraftMonth",
-    onSelectDay: "selectDraftDay",
-    onUpdateTime: "updateDraftTime",
-    onConfirm: "confirmDeadlineSelection"
+    onShiftMonth: shiftDraftMonth,
+    onSelectDay: selectDraftDay,
+    onUpdateTime: updateDraftTime,
+    onConfirm: confirmDeadlineSelection
   });
 }
 
@@ -739,70 +753,166 @@ function renderDeadlinePickerPanel(panel, selectedDate, handlers) {
   const hour = selectedDate.getHours();
   const minute = selectedDate.getMinutes();
   const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
-  let calendarHtml = "";
+
+  panel.replaceChildren();
+
+  const header = document.createElement("div");
+  header.className = "deadline-panel-header";
+
+  const previousButton = document.createElement("button");
+  previousButton.type = "button";
+  previousButton.setAttribute("aria-label", "上个月");
+  previousButton.textContent = "<";
+  previousButton.addEventListener("click", () => {
+    runDeadlinePickerHandler(handlers, "onShiftMonth", -1);
+  });
+
+  const title = document.createElement("strong");
+  title.textContent = `${year}年${String(month + 1).padStart(2, "0")}月`;
+
+  const nextButton = document.createElement("button");
+  nextButton.type = "button";
+  nextButton.setAttribute("aria-label", "下个月");
+  nextButton.textContent = ">";
+  nextButton.addEventListener("click", () => {
+    runDeadlinePickerHandler(handlers, "onShiftMonth", 1);
+  });
+
+  header.appendChild(previousButton);
+  header.appendChild(title);
+  header.appendChild(nextButton);
+
+  const body = document.createElement("div");
+  body.className = "deadline-panel-body";
+
+  const calendar = document.createElement("div");
+  calendar.className = "deadline-calendar";
 
   weekdays.forEach((weekday) => {
-    calendarHtml += `<span class="deadline-weekday">${weekday}</span>`;
+    const weekdayLabel = document.createElement("span");
+    weekdayLabel.className = "deadline-weekday";
+    weekdayLabel.textContent = weekday;
+    calendar.appendChild(weekdayLabel);
   });
 
   for (let index = 0; index < firstDay; index++) {
-    calendarHtml += '<span class="deadline-day empty"></span>';
+    const emptyDay = document.createElement("span");
+    emptyDay.className = "deadline-day empty";
+    calendar.appendChild(emptyDay);
   }
 
   for (let day = 1; day <= daysInMonth; day++) {
-    const selected = day === selectedDate.getDate() ? " selected" : "";
-    calendarHtml += `<button class="deadline-day${selected}" type="button" onclick="${handlers.onSelectDay}(${day})">${day}</button>`;
+    const dayButton = document.createElement("button");
+    dayButton.className = "deadline-day";
+    dayButton.type = "button";
+    dayButton.textContent = String(day);
+
+    if (day === selectedDate.getDate()) {
+      dayButton.classList.add("selected");
+    }
+
+    dayButton.addEventListener("click", () => {
+      runDeadlinePickerHandler(handlers, "onSelectDay", day);
+    });
+    dayButton.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      runDeadlinePickerHandler(handlers, "onSelectDay", day);
+    });
+
+    calendar.appendChild(dayButton);
   }
 
-  const cancelButtonHtml = handlers.onCancel
-    ? `<button class="deadline-cancel-button" type="button" onclick="${handlers.onCancel}()">取消</button>`
-    : "";
+  const time = document.createElement("div");
+  time.className = "deadline-time";
+  time.appendChild(createTimeSelect("小时", "hour", hour, 24, handlers));
+  time.appendChild(createTimeSelect("分钟", "minute", minute, 60, handlers));
 
-  panel.innerHTML = `
-    <div class="deadline-panel-header">
-      <button type="button" aria-label="上个月" onclick="${handlers.onShiftMonth}(-1)">‹</button>
-      <strong>${year}年${String(month + 1).padStart(2, "0")}月</strong>
-      <button type="button" aria-label="下个月" onclick="${handlers.onShiftMonth}(1)">›</button>
-    </div>
-    <div class="deadline-panel-body">
-      <div class="deadline-calendar">${calendarHtml}</div>
-      <div class="deadline-time">
-        <label>
-          <span>小时</span>
-          <select onchange="${handlers.onUpdateTime}('hour', this.value)">
-            ${Array.from({ length: 24 }, (_, index) => `<option value="${index}"${index === hour ? " selected" : ""}>${String(index).padStart(2, "0")}</option>`).join("")}
-          </select>
-        </label>
-        <label>
-          <span>分钟</span>
-          <select onchange="${handlers.onUpdateTime}('minute', this.value)">
-            ${Array.from({ length: 60 }, (_, index) => `<option value="${index}"${index === minute ? " selected" : ""}>${String(index).padStart(2, "0")}</option>`).join("")}
-          </select>
-        </label>
-      </div>
-    </div>
-    <div class="deadline-panel-footer">
-      <span>${formatPickerLabel(toDateTimeLocalValue(selectedDate.toISOString()))}</span>
-      <div class="deadline-panel-actions">
-        <button class="deadline-confirm-button" type="button" onclick="${handlers.onConfirm}()">确认</button>
-        ${cancelButtonHtml}
-      </div>
-    </div>
-  `;
+  body.appendChild(calendar);
+  body.appendChild(time);
+
+  const footer = document.createElement("div");
+  footer.className = "deadline-panel-footer";
+
+  const selectedLabel = document.createElement("span");
+  selectedLabel.textContent = formatPickerLabel(toDateTimeLocalValue(selectedDate.toISOString()));
+
+  const actions = document.createElement("div");
+  actions.className = "deadline-panel-actions";
+
+  const confirmButton = document.createElement("button");
+  confirmButton.className = "deadline-confirm-button";
+  confirmButton.type = "button";
+  confirmButton.textContent = "确认";
+  confirmButton.addEventListener("click", () => {
+    runDeadlinePickerHandler(handlers, "onConfirm");
+  });
+  actions.appendChild(confirmButton);
+
+  if (handlers.onCancel) {
+    const cancelButton = document.createElement("button");
+    cancelButton.className = "deadline-cancel-button";
+    cancelButton.type = "button";
+    cancelButton.textContent = "取消";
+    cancelButton.addEventListener("click", () => {
+      runDeadlinePickerHandler(handlers, "onCancel");
+    });
+    actions.appendChild(cancelButton);
+  }
+
+  footer.appendChild(selectedLabel);
+  footer.appendChild(actions);
+
+  panel.appendChild(header);
+  panel.appendChild(body);
+  panel.appendChild(footer);
+}
+
+function createTimeSelect(labelText, unit, value, optionCount, handlers) {
+  const label = document.createElement("label");
+  const labelCopy = document.createElement("span");
+  const select = document.createElement("select");
+
+  labelCopy.textContent = labelText;
+
+  for (let index = 0; index < optionCount; index++) {
+    const option = document.createElement("option");
+    option.value = String(index);
+    option.textContent = String(index).padStart(2, "0");
+    option.selected = index === value;
+    select.appendChild(option);
+  }
+
+  select.addEventListener("change", () => {
+    runDeadlinePickerHandler(handlers, "onUpdateTime", unit, select.value);
+  });
+
+  label.appendChild(labelCopy);
+  label.appendChild(select);
+  return label;
+}
+
+function runDeadlinePickerHandler(handlers, name, ...args) {
+  const handler = handlers[name];
+
+  if (typeof handler === "function") {
+    handler(...args);
+    return;
+  }
+
+  if (typeof handler === "string" && typeof window[handler] === "function") {
+    window[handler](...args);
+  }
 }
 
 function confirmDeadlineSelection() {
-  const deadlineInput = document.getElementById("deadlineInput");
-
   if (Number.isNaN(draftDeadlineDate.getTime())) {
     alert("请先选择截止时间");
     return;
   }
 
-  deadlineInput.value = toDateTimeLocalValue(draftDeadlineDate.toISOString());
-  confirmedDeadlineValue = deadlineInput.value;
+  commitDraftDeadline();
   closeDeadlinePicker();
-  updateDeadlineConfirmState();
 }
 
 function addTask() {

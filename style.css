@@ -274,6 +274,7 @@ input:focus {
   right: 0;
   z-index: 100;
   width: min(344px, calc(100vw - 48px));
+  max-width: 100%;
   padding: 12px;
   border: 1px solid rgba(170, 204, 220, 0.86);
   border-radius: 24px;
@@ -311,14 +312,18 @@ input:focus {
 
 .deadline-panel-body {
   display: grid;
-  grid-template-columns: 1fr 86px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
+  min-width: 0;
 }
 
 .deadline-calendar {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .deadline-weekday,
@@ -342,6 +347,12 @@ input:focus {
   font-weight: 800;
 }
 
+button.deadline-day {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+}
+
 .deadline-day:not(.empty):hover {
   background: #eef0f2;
 }
@@ -354,13 +365,16 @@ input:focus {
 
 .deadline-time {
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
   align-content: start;
+  min-width: 0;
 }
 
 .deadline-time label {
   display: grid;
   gap: 4px;
+  min-width: 0;
   color: var(--muted);
   font-size: 11px;
   font-weight: 800;
@@ -368,8 +382,10 @@ input:focus {
 
 .deadline-time select {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 28px;
-  padding: 5px 10px;
+  padding: 5px 8px;
   border: 1px solid rgba(170, 204, 220, 0.7);
   border-radius: 11px;
   color: var(--ink);

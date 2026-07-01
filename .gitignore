@@ -2,3 +2,4 @@ node_modules/
 dist/
 electron-*-win32-*.zip
 .tools/
+.tmp-electron-profile/
